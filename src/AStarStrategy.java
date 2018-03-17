@@ -1,99 +1,84 @@
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
-import java.util.stream.Stream;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.List;
-import java.lang.Math;
+import java.util.stream.Stream;
 
 class AStarPathingStrategy
-        implements PathingStrategy {
-    public List<Point> computePath(Point start, Point end,
-                                   Predicate<Point> canPassThrough,
-                                   BiPredicate<Point, Point> withinReach,
-                                   Function<Point, Stream<Point>> potentialNeighbors) {
+   implements PathingStrategy
+{
+   public List<Point> computePath(Point start, Point end,
+      Predicate<Point> canPassThrough,
+      BiPredicate<Point, Point> withinReach,
+      Function<Point, Stream<Point>> potentialNeighbors)
+   {
 
-        List<Point> closedSet = new ArrayList<Point>();
-        List<Point> openSet = new ArrayList<Point>();
-        Map<Point, Point> cameFrom = new HashMap<Point, Point>();
-        Map<Point, Integer> gScore = new HashMap<Point, Integer>();
-        Map<Point, Integer> fScore = new HashMap<Point, Integer>();
-        //Point current = start;
+      // Create lists and maps
+      List<Point> openList = new ArrayList<>();
+      List<Point> closedList = new ArrayList<>();
+      Map<Point, Integer> fScore = new HashMap<>();
+      Map<Point, Integer> gScore = new HashMap<>();
+      Map<Point, Point> prevPoint = new HashMap<>();
 
-        openSet.add(start);
-        gScore.put(start, 0);
-        fScore.put(start, heuristic(start, end) + gScore.get(start));
-        while (openSet.size() != 0) {
-            Point current = findLowest(fScore, openSet);
+      // Add start node
+      openList.add(start);
+      fScore.put(start, heuristic(start, end));
+      gScore.put(start, 0);
+      prevPoint.put(start, null);
 
-            if(withinReach.test(current,end)){
-                cameFrom.put(end, current);
-                List<Point> path =  reconstruct_path(cameFrom, current);
-                Collections.reverse(path);
-                return path;
+      Point current = start;
+
+      while(!current.adjacent(end) && openList.size() != 0) {
+
+         // Find valid adjacent nodes
+         List<Point> neighbors = potentialNeighbors.apply(current)
+                 .filter(canPassThrough)
+                 .filter(p -> !closedList.contains(p))
+                 .collect(Collectors.toList());
+
+         // Add adjacent nodes to closed list
+         for (Point p : neighbors) {
+            if (!openList.contains(p)) {
+               int g = gScore.get(current) + 1;
+               int h = heuristic(p, end);
+               int f = g + h;
+               openList.add(p);
+
+               prevPoint.put(p, current);
+               gScore.put(p, g);
+               fScore.put(p, f);
             }
+         }
 
-            openSet.remove(current);
-            closedSet.add(current);
+         closedList.add(current);
+         openList.remove(current);
 
-            List<Point> neighbors = potentialNeighbors.apply(current)
-                    .filter(canPassThrough)
-//                 .filter(p -> !closedSet.contains(p))
-//                 .filter(p -> !openSet.contains(p))
-                    .collect(Collectors.toList());
+         if(openList.size() > 0) {
+            current = openList.get(0);
 
-            for (Point n : neighbors) {
-                if(closedSet.contains(n)){
-                    continue;
-                }
-                if(!(openSet.contains(n))){
-                    int tentative_gScore = gScore.get(current) + 1;
-                    openSet.add(n);
-                    cameFrom.put(n, current);
-                    gScore.put(n, tentative_gScore);
-                    fScore.put(n, gScore.get(n) + heuristic(n, end));
-                }else{
-                    cameFrom.put(n, current);
-                }
+            for (Point p : openList) {
+               if (fScore.get(p) <= fScore.get(current)) {
+                  current = p;
+                  break;
+               }
             }
+         }
+      }
 
-        }
-        return new ArrayList<Point>();
+      // Make path
+      List<Point> path = new ArrayList<>();
 
-    }
+      while(prevPoint.get(current) != null) {
+         path.add(0, current);
+         current = prevPoint.get(current);
+      }
 
+      path.add(current);
+      return path;
+   }
 
-    public Point findLowest(Map<Point, Integer> fScore, List<Point> openSet) {
-
-        List<Point> filteredList = fScore.keySet().stream()
-                .filter(p -> openSet.contains(p))
-                .collect(Collectors.toList());
-        Point lowest = filteredList.get(0);
-
-        for (Point p : filteredList){
-            if (fScore.get(p) < fScore.get(lowest)){
-                lowest = p;
-            }
-        }
-        return lowest;
-    }
-
-    public int heuristic(Point start, Point end) {
-        return Math.abs(start.x - end.x) + Math.abs(start.y - end.y);
-    }
-
-
-    public List<Point> reconstruct_path(Map<Point, Point> cameFrom, Point current) {
-        List<Point> total_path = new ArrayList<Point>();
-        total_path.add(current);
-        while(cameFrom.keySet().contains(current)){
-            current = cameFrom.get(current);
-            total_path.add(current);
-        }
-        total_path.remove(total_path.size() - 1);
-        return total_path;
-    }
-
-
+   private int heuristic(Point p1, Point p2) {
+      return Math.abs(p1.x - p2.x) + Math.abs(p1.y - p2.y);
+   }
 }

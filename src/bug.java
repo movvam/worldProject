@@ -20,7 +20,7 @@ public class bug extends AnimationEntity{
 
         List<Point> path = strategy.computePath(this.getposition(), destPos, p -> (world.withinBounds(p) && (!(world.isOccupied(p)) || world.getOccupant(p).get().getClass() == this.getClass())),
                 (p1, p2) -> p1.adjacent( p2),
-                strategy.CARDINAL_NEIGHBORS);
+                strategy.DIAGONAL_CARDINAL_NEIGHBORS);
         if(path.size() != 0){
             return path.get(0);
         }

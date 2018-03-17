@@ -50,6 +50,7 @@ public final class VirtualWorld
    private final int KEYED_IMAGE_MIN = 5;
 
    private boolean changed = false;
+   private Random rand = new Random();
 
    public void settings()
    {
@@ -160,6 +161,17 @@ public final class VirtualWorld
                     imageStore.getImageList("rot")));
          }
       }
+      List<Point> trees = new ArrayList<Point>();
+      trees.add(new Point(position.getX() + rand.nextInt(3) + 1, position.getY() + rand.nextInt(3) + 1));
+      trees.add( new Point(position.getX() - rand.nextInt(3) - 1, position.getY() - rand.nextInt(3) - 1));
+
+      for (Point point : trees) {
+         if (world.withinBounds(point) && (!(world.isOccupied(point)) || world.getOccupant(point).get().getClass() != Obstacle.class)) {
+            world.setBackground(point, new Background("tree",
+                    imageStore.getImageList("tree")));
+         }
+      }
+
        if (world.withinBounds(down) && !world.isOccupied(down)) {
            //world.tryAddEntity(
            AnimationEntity bug = new bug("bug", down, imageStore.getImageList("bug"), 0, 0, 1000, 900);
