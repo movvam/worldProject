@@ -1,9 +1,0 @@
-the rot. 
-	- just is there, 5 blocks are spawned in a plus shape, other 2 are random
-	- potentially add a pulsing effect 
-	- if an entity is adjacent to the rot, the rot takes its spot. 
-
-rot monster eats ore blobs and blacksmiths
-
-
-dark miners return ore to the rot mother

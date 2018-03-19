@@ -6,6 +6,8 @@ import processing.core.*;
 public final class VirtualWorld
    extends PApplet
 {
+    private int counter = 0;
+
    private final int TIMER_ACTION_PERIOD = 100;
 
    private static final int VIEW_WIDTH =  640;
@@ -49,7 +51,6 @@ public final class VirtualWorld
    private final int COLOR_MASK = 0xffffff;
    private final int KEYED_IMAGE_MIN = 5;
 
-   private boolean changed = false;
    private Random rand = new Random();
 
    public void settings()
@@ -81,10 +82,16 @@ public final class VirtualWorld
    public void draw()
    {
       long time = System.currentTimeMillis();
+      counter++;
+       if(counter == 350){
+           spreadRot(imageStore);
+           counter = 0;
+       }
       if (time >= next_time)
       {
          scheduler.updateOnTime(time);
          next_time = time + TIMER_ACTION_PERIOD;
+
       }
 
       view.drawViewport();
@@ -120,28 +127,12 @@ public final class VirtualWorld
       int x = mouseX / 32;
       int y = mouseY / 32;
 
-//      if (!changed){
-//
-//            for (int row = 0; row < world.getNumRows(); row++)
-//            {
-//               Arrays.fill((world.getBackground())[row],  new Background("dryGrass",
-//                       imageStore.getImageList("dryGrass")));
-//            }
-//
-//      }
+
       Point pos = view.getViewport().viewportToWorld(x, y);
       changeBackgroundOnClick(pos);
-      //changed = true;
    }
 
-//   public static void spreadRot(WorldModel world, Point point){
-//       for (int row = 0; row < world.getNumRows(); row++)
-//            {
-//                if(world.withinBounds(point) && world.getBackgroundCell(point).getId().equals("rot")){
-//                    List<Point> neighbors = getNeighbors(point);
-//                }
-//            }
-//   }
+
 
    private void changeBackgroundOnClick(Point position){
        Point down = new Point(position.getX() , position.getY() + 1 );
@@ -193,6 +184,38 @@ public final class VirtualWorld
          imageStore.getImageList( DEFAULT_IMAGE_NAME));
    }
 
+   public void spreadRot( ImageStore imageStore){
+    List<Point> changeList = new ArrayList<Point>();
+     for (int row = 0; row < world.getNumRows(); row++) {
+         for (int col = 0; col < world.getNumCols(); col++) {
+             Point point = view.getViewport().viewportToWorld(row, col);
+             if (world.withinBounds(point) && world.getBackgroundCell(point).getId().equals("rot")) {
+                 for (int x = -1; x <= 1; x++) {
+                     for (int y = -1; y <= 1; y++) {
+                         Point neighbor = new Point(point.getX() + x, point.getY() + y);
+                         if (world.withinBounds(neighbor) && (!(world.isOccupied(neighbor))) && !(world.getBackgroundCell(neighbor).getId().equals("tree"))  ) {
+                            if ((rand.nextInt(50) + 1) > 40){
+                                changeList.add(neighbor);
+                                if ((rand.nextInt(50) + 1) > 50){
+                                    Point extra = new Point(point.getX() + x, point.getY() + y);
+                                    if (world.withinBounds(extra) && (!(world.isOccupied(extra))) && !(world.getBackgroundCell(extra).getId().equals("tree"))  ) {
+                                        if ((rand.nextInt(50) + 1) > 40){
+                                            changeList.add(extra);
+                                        }
+                                    }
+                                }
+                            }
+                         }
+                     }
+                 }
+             }
+         }
+     }
+     for(Point point : changeList){
+         world.setBackground(point, new Background("rot",
+                                     imageStore.getImageList("rot")));
+     }
+ }
 
    private PImage createImageColored(int width, int height, int color)
    {

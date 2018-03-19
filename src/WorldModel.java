@@ -134,7 +134,7 @@ final class WorldModel
    public boolean isOccupied( Point pos)
    {
       return withinBounds(pos) &&
-              getOccupancyCell( pos) != null;
+              (getOccupancyCell( pos) != null );
    }
 
    public void addEntity(Entity entity)
